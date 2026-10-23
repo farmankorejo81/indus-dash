@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#061522">
+<meta name="description" content="Play Indus Dash, a free arcade traffic-dodging game. Collect coins, unlock levels and beat your best score.">
+<title>Indus Dash — Neon Road Adventure</title>
+<style>
+:root{color-scheme:dark;--bg:#061522;--panel:#0d2638;--line:#24506a;--mint:#5fffd0;--gold:#ffd166;--muted:#a7c3d2}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;padding:18px;background:radial-gradient(ellipse at 50% -10%,#1b5367 0,#0a2537 40%,#061522 78%);font-family:Inter,system-ui,Segoe UI,Arial,sans-serif;color:#f2fbff}
+.app{width:min(100%,900px);margin:auto}header{text-align:center;padding:5px 0 15px}h1{margin:0;color:var(--mint);font-size:clamp(2.1rem,7vw,4rem);letter-spacing:.08em;text-shadow:0 0 28px #5fffd033}header p{margin:5px;color:var(--muted)}.topline{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:10px}.tag{border:1px solid #2c5b70;border-radius:99px;padding:5px 10px;font-size:.75rem;color:#d4e9f2;background:#0b2334}
+.hud{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px}.stat{background:linear-gradient(145deg,#102e42,#0a2030);border:1px solid var(--line);border-radius:14px;padding:10px;text-align:center;box-shadow:0 8px 24px #0002}.stat small{display:block;color:var(--muted);font-size:.68rem;letter-spacing:.1em;text-transform:uppercase}.stat strong{font-size:clamp(1.05rem,3vw,1.5rem)}
+.stage{position:relative;border:1px solid #32647a;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px #0006;background:#08131c}canvas{display:block;width:100%;height:auto;touch-action:manipulation}.overlay{position:absolute;inset:0;display:grid;place-items:center;padding:20px;background:linear-gradient(#061522c9,#061522e8);text-align:center}.overlay.hide{display:none}.modal{max-width:460px}.emblem{font-size:2.3rem;margin-bottom:4px}.modal h2{font-size:clamp(1.7rem,5vw,2.5rem);margin:0 0 8px;color:var(--gold)}.modal p{line-height:1.55;color:#d0e5ef}.primary{background:linear-gradient(135deg,#75ffce,#35d6a4);border:0;border-radius:13px;padding:13px 22px;color:#04251c;font-size:1rem;font-weight:900;cursor:pointer;box-shadow:0 5px 0 #168c68}.primary:active{transform:translateY(3px);box-shadow:0 2px 0 #168c68}.subbuttons{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px}.sub{background:#102c3d;color:#e9f9ff;border:1px solid #356074;border-radius:11px;padding:9px 13px;cursor:pointer;font-weight:700}.controls{display:flex;gap:10px;margin-top:11px}.controls button{flex:1;background:#102b3d;border:1px solid #2a5b70;border-radius:13px;color:white;padding:14px 8px;font-weight:850;font-size:1rem;touch-action:manipulation}.controls button:active{background:#1a485a}.below{display:grid;grid-template-columns:1.3fr 1fr;gap:10px;margin-top:12px}.info{border:1px solid #21465c;border-radius:15px;padding:13px 15px;background:#0c2435;color:#c6dce6;font-size:.9rem;line-height:1.6}.info b{color:var(--mint)}.info h3{margin:0 0 5px;color:#f3fbff;font-size:1rem}.footer{text-align:center;color:#7898a9;font-size:.76rem;margin:15px 0}.sound-on{color:var(--mint)}button:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+@media(max-width:560px){body{padding:10px}.hud{grid-template-columns:repeat(2,1fr)}.below{grid-template-columns:1fr}.controls button{font-size:.88rem;padding:14px 4px}.stat{padding:8px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header><h1>INDUS DASH</h1><p>Neon Road Adventure • Dodge traffic. Collect coins. Level up.</p><div class="topline"><span class="tag">🇵🇰 Pakistan-inspired arcade</span><span class="tag">Free to play</span><span class="tag" id="soundBadge">🔊 Sound on</span></div></header>
+<section class="hud" aria-label="Game stats">
+<div class="stat"><small>Score</small><strong id="score">0</strong></div><div class="stat"><small>Coins this run</small><strong id="coins">0</strong></div><div class="stat"><small>Level</small><strong id="level">1</strong></div><div class="stat"><small>Best score</small><strong id="best">0</strong></div>
+</section>
+<section class="stage">
+<canvas id="game" width="720" height="900" aria-label="Indus Dash game play area"></canvas>
+<div class="overlay" id="overlay"><div class="modal"><div class="emblem">🏁 ✨ 🪙</div><h2 id="modalTitle">Ready to Dash?</h2><p id="modalText">Slide between lanes, avoid traffic and collect coins. Every level gets faster and the road changes its neon mood.</p><button class="primary" id="play">START YOUR RUN</button><div class="subbuttons"><button class="sub" id="soundBtn">🔊 Sound: On</button><button class="sub" id="resetBtn">Reset saved best</button></div></div></div>
+</section>
+<div class="controls"><button id="left">◀ LEFT</button><button id="boost">⚡ QUICK MOVE</button><button id="right">RIGHT ▶</button></div>
+<section class="below">
+<div class="info"><h3>🎮 How to play</h3><b>Keyboard:</b> ← / → or A / D. Use Space to start or replay.<br><b>Touch:</b> Tap the left/right buttons or tap the left/right side of the road.<br><b>Goal:</b> Avoid cars, collect gold coins and reach new levels. Your best score is saved on this device.</div>
+<div class="info"><h3>🌟 Road tips</h3>• Each 250 points advances a level.<br>• Coins add bonus points.<br>• Traffic becomes quicker as you progress.<br>• Sound effects can be switched off anytime.</div>
+</section>
+<p class="footer">INDUS DASH • Original browser game demo • No account or payment needed</p>
+</main>
+<script>
+(()=>{'use strict';
+const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+const $=id=>document.getElementById(id);
+const W=720,H=900,lanes=[245,360,475],player={lane:1,y:742,w:62,h:106};
+let running=false,score=0,coins=0,level=1,best=0,elapsed=0,roadOffset=0,spawn=0,coinSpawn=0,last=0,shake=0,boostTimer=0,soundOn=true,audio=null;
+let obstacles=[],pickups=[],particles=[],lastLevel=1;
+const palettes=[['#092c39','#0b6d68','#5fffd0'],['#211b3d','#5a347b','#d9a7ff'],['#3b251b','#94562c','#ffd166'],['#102b42','#235da8','#83c8ff']];
+try{best=+(localStorage.getItem('indusDashBest')||0);soundOn=localStorage.getItem('indusDashSound')!=='off'}catch(e){}
+$('best').textContent=best;updateSoundUI();
+function beep(freq=550,dur=.07,type='sine',vol=.035){if(!soundOn)return;try{audio=audio||new(window.AudioContext||window.webkitAudioContext)();if(audio.state==='suspended')audio.resume();let o=audio.createOscillator(),g=audio.createGain();o.type=type;o.frequency.value=freq;g.gain.setValueAtTime(vol,audio.currentTime);g.gain.exponentialRampToValueAtTime(.001,audio.currentTime+dur);o.connect(g);g.connect(audio.destination);o.start();o.stop(audio.currentTime+dur)}catch(e){}}
+function updateSoundUI(){$('soundBtn').textContent=soundOn?'🔊 Sound: On':'🔇 Sound: Off';$('soundBadge').textContent=soundOn?'🔊 Sound on':'🔇 Sound off';$('soundBadge').className='tag '+(soundOn?'sound-on':'')}
+function saveBest(){if(score>best){best=score;$('best').textContent=best;try{localStorage.setItem('indusDashBest',String(best))}catch(e){}}}
+function reset(){score=0;coins=0;level=1;elapsed=0;roadOffset=0;spawn=.25;coinSpawn=.7;shake=0;boostTimer=0;lastLevel=1;player.lane=1;obstacles=[];pickups=[];particles=[];updateHUD()}
+function updateHUD(){$('score').textContent=score;$('coins').textContent=coins;$('level').textContent=level;$('best').textContent=best}
+function start(){reset();running=true;$('overlay').classList.add('hide');last=performance.now();beep(650,.12,'triangle');requestAnimationFrame(loop)}
+function end(){running=false;saveBest();$('modalTitle').textContent='Run Complete!';$('modalText').textContent=`Score: ${score} • Coins collected: ${coins} • Level reached: ${level}. Try again and beat your best score of ${best}!`;$('play').textContent='PLAY AGAIN';$('overlay').classList.remove('hide');beep(180,.3,'sawtooth',.04)}
+function move(d){if(!running)return;let before=player.lane;player.lane=Math.max(0,Math.min(2,player.lane+d));if(before!==player.lane)beep(330+player.lane*90,.045,'triangle',.02)}
+function quickMove(){if(!running)return;boostTimer=.18;beep(800,.1,'square',.02);for(let i=0;i<7;i++)particles.push({x:lanes[player.lane]+(Math.random()-.5)*36,y:player.y+55+Math.random()*20,vx:(Math.random()-.5)*80,vy:100+Math.random()*150,life:.3,color:'#5fffd0'})}
+document.addEventListener('keydown',e=>{if(['ArrowLeft','ArrowRight','a','A','d','D',' ','Shift'].includes(e.key))e.preventDefault();if(e.key==='ArrowLeft'||e.key==='a'||e.key==='A')move(-1);if(e.key==='ArrowRight'||e.key==='d'||e.key==='D')move(1);if(e.key==='Shift')quickMove();if(e.key===' '&&!running)start()});
+$('left').onclick=()=>move(-1);$('right').onclick=()=>move(1);$('boost').onclick=quickMove;$('play').onclick=start;
+$('soundBtn').onclick=()=>{soundOn=!soundOn;try{localStorage.setItem('indusDashSound',soundOn?'on':'off')}catch(e){}updateSoundUI();beep(620,.07)};
+$('resetBtn').onclick=()=>{best=0;try{localStorage.removeItem('indusDashBest')}catch(e){}updateHUD();$('modalText').textContent='Saved best score reset. Ready for a fresh challenge?';beep(420,.08)};
+canvas.addEventListener('pointerdown',e=>{if(!running)return;let r=canvas.getBoundingClientRect(),x=(e.clientX-r.left)/r.width*W;move(x<W/2?-1:1)});
+function rr(x,y,w,h,r,c){ctx.fillStyle=c;ctx.beginPath();ctx.roundRect(x,y,w,h,r);ctx.fill()}
+function road(dt){let pal=palettes[(level-1)%palettes.length];ctx.fillStyle=pal[0];ctx.fillRect(0,0,W,H);
+let grd=ctx.createLinearGradient(0,0,W,0);grd.addColorStop(0,pal[1]);grd.addColorStop(.16,'#25313c');grd.addColorStop(.84,'#25313c');grd.addColorStop(1,pal[1]);ctx.fillStyle=grd;ctx.fillRect(150,0,420,H);
+ctx.fillStyle=pal[2];ctx.globalAlpha=.85;ctx.fillRect(163,0,4,H);ctx.fillRect(553,0,4,H);ctx.globalAlpha=1;
+roadOffset=(roadOffset+dt*(running?380+level*38:90))%110;
+ctx.fillStyle='#d4e8ef';for(let y=-110+roadOffset;y<H;y+=110){ctx.globalAlpha=.78;ctx.fillRect(284,y,6,57);ctx.fillRect(430,y,6,57)}ctx.globalAlpha=1;
+// animated roadside lamps and shrubs
+for(let y=-150+(roadOffset*1.3)%150;y<H;y+=150){rr(73,y,33,38,9,'#194c43');rr(613,y+55,30,34,8,'#194c43');ctx.fillStyle=pal[2];ctx.globalAlpha=.45;ctx.beginPath();ctx.arc(112,y+15,5,0,Math.PI*2);ctx.arc(603,y+70,5,0,Math.PI*2);ctx.fill();ctx.globalAlpha=1}
+}
+function car(x,y,w,h,color,hero=false){ctx.save();ctx.shadowColor=hero?'#5fffd0':color;ctx.shadowBlur=hero?20:8;rr(x-w/2,y-h/2,w,h,14,color);ctx.shadowBlur=0;
+rr(x-w*.34,y-h*.29,w*.68,h*.25,7,hero?'#cafff0':'#b9d9e8');rr(x-w*.34,y+h*.04,w*.68,h*.23,7,'#183344');
+ctx.fillStyle='#0b151d';ctx.fillRect(x-w/2-4,y-h*.3,7,24);ctx.fillRect(x+w/2-3,y-h*.3,7,24);ctx.fillRect(x-w/2-4,y+h*.16,7,24);ctx.fillRect(x+w/2-3,y+h*.16,7,24);
+ctx.fillStyle=hero?'#fff2a8':'#ff7070';ctx.fillRect(x-w*.35,y+h*.34,w*.18,6);ctx.fillRect(x+w*.17,y+h*.34,w*.18,6);
+if(hero){ctx.fillStyle='#053126';ctx.font='900 14px system-ui';ctx.textAlign='center';ctx.fillText('INDUS',x,y+5)}ctx.restore()}
+function coinDraw(x,y,r){ctx.save();ctx.translate(x,y);ctx.rotate(Math.sin(elapsed*2)*.15);ctx.shadowColor='#ffd166';ctx.shadowBlur=20;let g=ctx.createRadialGradient(-5,-5,2,0,0,r);g.addColorStop(0,'#fff3b0');g.addColorStop(.5,'#ffd166');g.addColorStop(1,'#b87919');ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,r,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;ctx.strokeStyle='#fff0a3';ctx.lineWidth=3;ctx.stroke();ctx.fillStyle='#7c4a08';ctx.font='bold 20px system-ui';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('$',0,1);ctx.restore()}
+function star(x,y,r){ctx.save();ctx.translate(x,y);ctx.rotate(elapsed*1.8);ctx.fillStyle='#b4ffef';ctx.shadowColor='#5fffd0';ctx.shadowBlur=18;ctx.beginPath();for(let i=0;i<10;i++){let a=-Math.PI/2+i*Math.PI/5,rad=i%2===0?r:r*.45;ctx.lineTo(Math.cos(a)*rad,Math.sin(a)*rad)}ctx.closePath();ctx.fill();ctx.restore()}
+function hit(a,b){return Math.abs(a.x-b.x)<(a.w+b.w)*.37&&Math.abs(a.y-b.y)<(a.h+b.h)*.38}
+function burst(x,y,color,n=12){for(let i=0;i<n;i++){let a=Math.random()*Math.PI*2,s=40+Math.random()*180;particles.push({x,y,vx:Math.cos(a)*s,vy:Math.sin(a)*s,life:.35+Math.random()*.35,color})}}
+function loop(now){if(!running)return;let dt=Math.min((now-last)/1000,.04);last=now;elapsed+=dt;
+let speed=370+level*38+Math.min(score,1500)*.06;road(dt);
+spawn+=dt;if(spawn>Math.max(.36,1.08-level*.075)){spawn=0;let lane=Math.floor(Math.random()*3);if(!obstacles.some(o=>o.lane===lane&&o.y<190))obstacles.push({lane,x:lanes[lane],y:-115,w:59+Math.random()*5,h:100,color:['#f06b54','#6589f4','#bf79f4','#e7a44e'][Math.floor(Math.random()*4)]})}
+coinSpawn+=dt;if(coinSpawn>Math.max(.55,1.25-level*.04)){coinSpawn=0;let lane=Math.floor(Math.random()*3);pickups.push({lane,x:lanes[lane],y:-35,r:19,type:Math.random()<.22?'star':'coin',taken:false})}
+obstacles.forEach(o=>o.y+=speed*dt);pickups.forEach(p=>p.y+=speed*dt*.94);
+const p={x:lanes[player.lane],y:player.y,w:player.w,h:player.h};
+for(const o of obstacles){if(hit(p,o)){shake=12;burst(p.x,p.y,'#ff6868',20);end();return}}
+for(const q of pickups){if(!q.taken&&Math.abs(p.x-q.x)<40&&Math.abs(p.y-q.y)<70){q.taken=true;if(q.type==='coin'){coins++;score+=35;burst(q.x,q.y,'#ffd166',9);beep(900,.08,'sine',.035)}else{score+=75;burst(q.x,q.y,'#5fffd0',14);beep(1100,.13,'triangle',.04)}}}
+score+=Math.floor(dt*(10+level));let nextLevel=Math.floor(score/250)+1;if(nextLevel>level){level=nextLevel;beep(720,.2,'triangle',.04);burst(W/2,250,palettes[(level-1)%palettes.length][2],22)}
+obstacles=obstacles.filter(o=>o.y<H+130);pickups=pickups.filter(q=>q.y<H+50&&!q.taken);
+particles=particles.filter(a=>a.life>0);particles.forEach(a=>{a.x+=a.vx*dt;a.y+=a.vy*dt;a.life-=dt});
+particles.forEach(a=>{ctx.globalAlpha=Math.max(0,a.life*2);ctx.fillStyle=a.color;ctx.beginPath();ctx.arc(a.x,a.y,4,0,Math.PI*2);ctx.fill()});ctx.globalAlpha=1;
+pickups.forEach(q=>q.type==='coin'?coinDraw(q.x,q.y,q.r):star(q.x,q.y,21));obstacles.forEach(o=>car(o.x,o.y,o.w,o.h,o.color));car(lanes[player.lane],player.y,player.w,player.h,'#35d6a4',true);
+if(boostTimer>0){boostTimer-=dt;ctx.globalAlpha=.22;rr(lanes[player.lane]-42,player.y+45,84,75,25,'#5fffd0');ctx.globalAlpha=1}
+ctx.fillStyle='#061522aa';rr(190,17,340,44,13,'#061522aa');ctx.fillStyle='#e9fbff';ctx.textAlign='center';ctx.font='800 17px system-ui';ctx.fillText(`LEVEL ${level}  •  ${250-((score)%250)} TO NEXT`,360,45);
+updateHUD();requestAnimationFrame(loop)}
+// Attractive idle scene
+road(0);car(lanes[1],player.y,player.w,player.h,'#35d6a4',true);coinDraw(lanes[0],450,18);star(lanes[2],350,20);
+})();
+</script>
+</body></html>
